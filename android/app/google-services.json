@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "814791009948",
+    "project_id": "lny-initiative",
+    "storage_bucket": "lny-initiative.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:814791009948:android:cc06be5afaf51160c32f59",
+        "android_client_info": {
+          "package_name": "com.example.lny_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "814791009948-ohmvav2ml5veldiloqsrpt0bcheikt6k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCivDmrRj3AzJEXr4jc7fZNO2exUyyalDk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "814791009948-ohmvav2ml5veldiloqsrpt0bcheikt6k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

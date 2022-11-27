@@ -122,7 +122,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       onPressed: () {
                         // go to add_content.dart
-                        Navigator.pushNamed(context, '/add-content');
+                        Navigator.pushNamed(context, '/addContent');
                       },
                       child: // Iconify arrow
                           const Iconify(

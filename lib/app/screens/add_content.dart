@@ -13,26 +13,35 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-class AddContent extends StatefulWidget {
-  const AddContent({Key? key}) : super(key: key);
+class AddContentScreen extends StatefulWidget {
+  const AddContentScreen({Key? key}) : super(key: key);
 
   @override
-  _AddContentState createState() => _AddContentState();
+  _AddContentScreenState createState() => _AddContentScreenState();
 }
 
-class _AddContentState extends State<AddContent> {
+class _AddContentScreenState extends State<AddContentScreen> {
   double latitude = 0.0;
   double longitude = 0.0;
   String networkStatus = 'Offline';
   String networkType = 'None';
   bool isInFrance = false;
-
+  int numberOfImages = 0;
   @override
   void initState() {
-    _getLocation();
-    _getNetworkStatus();
-    _userIsInFrance();
+    _refreshData();
     super.initState();
+  }
+
+  // get the current number of images in the firebase storage
+  Future<void> _getNumberOfImages() async {
+    // images are stored in the firebase storage in the folder 'images'
+    final ref = FirebaseStorage.instance.ref().child('images');
+    // get the number of images in the folder
+    final numberOfImages = await ref.listAll();
+    setState(() {
+      this.numberOfImages = numberOfImages.items.length;
+    });
   }
 
   // get the location of the user
@@ -138,13 +147,80 @@ class _AddContentState extends State<AddContent> {
     }
   }
 
+  _refreshData() {
+    setState(() {
+      _getLocation();
+      _getNetworkStatus();
+      _userIsInFrance();
+      _getNumberOfImages();
+      loading = false;
+      isSent = false;
+    });
+  }
+
+  // if user isn't allowed to send content
+  // we will store keep in a list the images that the user wants to send
+  // and when the user is allowed to send content we will send all the images
+  // that are in the list
+  List<XFile> imagesToSend = [];
+  // add the image to the list
+  Future addImageToList() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    setState(() {
+      imagesToSend.add(pickedFile!);
+    });
+  }
+
+  // send all the images in the list
+  Future sendAllImages() async {
+    setState(() {
+      loading = true;
+    });
+    // upload the images
+    for (var i = 0; i < imagesToSend.length; i++) {
+      var file = File(imagesToSend[i].path);
+      var snapshot = await storageRef.child('images/${DateTime.now()}').putFile(file);
+      var downloadUrl = await snapshot.ref.getDownloadURL();
+      setState(() {
+        imageUrl = downloadUrl;
+        loading = false;
+        isSent = true;
+      });
+    }
+  }
+
+  // function for the onPressed of the send button
+  // if the user is allowed to send content we will send the image
+  // if the user isn't allowed to send content we will add the image to the list
+  Future sendImage() async {
+    if (_userCanSendContent()) {
+      // check if the list of images to send is empty
+      if (imagesToSend.isEmpty) {
+        // if the list is empty we will send the image
+        await uploadImage();
+      } else {
+        // if the list isn't empty we will send all the images in the list
+        await sendAllImages();
+        // then we will empty the list
+        setState(() {
+          imagesToSend = [];
+        });
+        // then we will allow the user to send a new image
+        await uploadImage();
+      }
+    } else {
+      addImageToList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: const Color.fromARGB(255, 17, 17, 17),
         body: GestureDetector(
           onDoubleTap: () {
-            Navigator.pushNamed(context, '/home');
+            // refresh the page
+            _refreshData();
           },
           child: Center(
             child: Stack(
@@ -160,7 +236,7 @@ class _AddContentState extends State<AddContent> {
                         children: [
                           // first text is "Il y a x photos souvenirs" with the number being yellow
                           Text(
-                            'Il y a 0 photos souvenirs',
+                            'Il y a $numberOfImages photos souvenirs',
                             style: GoogleFonts.montserrat(
                               color: Colors.white,
                               fontSize: 32,
@@ -168,7 +244,7 @@ class _AddContentState extends State<AddContent> {
                             ),
                           ),
                           Text(
-                            'Send your content to the server',
+                            'Pour rappel vous les verrez sur le site, pour actualiser la page double tappez sur le texte',
                             style: GoogleFonts.montserrat(
                               color: Colors.white,
                               fontSize: 20,
@@ -181,88 +257,36 @@ class _AddContentState extends State<AddContent> {
                     ),
                   ),
                 ),
-                // a button on the bottom of the screen to send the content
-                _userCanSendContent()
-                    ? Positioned(
-                        bottom: 50,
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width,
-                          child: Column(
-                            children: [
-                              ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    fixedSize: const Size(50, 50),
-                                    backgroundColor: const Color.fromARGB(255, 238, 238, 155),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  onLongPress: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('This button is to add content'),
-                                      ),
-                                    );
-                                  },
-                                  onPressed: () {
-                                    // TODO: send the content to the server
-                                    uploadImage();
-                                  },
-                                  child: const Iconify(MaterialSymbols.add)),
-                            ],
-                          ),
-                        ),
-                      )
-                    : // don't show the button if the user is not allowed to send content
-                    Positioned(
-                        bottom: 50,
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width,
-                          child: Column(
-                            children: [
-                              ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    fixedSize: const Size(50, 50),
-                                    backgroundColor: const Color.fromARGB(255, 238, 238, 155),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    // tell the user that he can't send content
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: const Text('You can\'t send content'),
-                                          content: const Text(
-                                              'You can only send content if you are in France or using wifi'),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text('Ok'),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  },
-                                  child: const Iconify(MaterialSymbols.add)),
-                              Text(
-                                'You are not allowed to send content',
-                                style: GoogleFonts.montserrat(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  fontStyle: FontStyle.italic,
-                                ),
+                Positioned(
+                  bottom: 50,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    child: Column(
+                      children: [
+                        ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              fixedSize: const Size(50, 50),
+                              backgroundColor: const Color.fromARGB(255, 238, 238, 155),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
+                            ),
+                            onLongPress: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('This button is to add content'),
+                                ),
+                              );
+                            },
+                            onPressed: () {
+                              sendImage();
+                              _getNumberOfImages();
+                            },
+                            child: const Iconify(MaterialSymbols.add)),
+                      ],
+                    ),
+                  ),
+                )
               ],
             ),
           ),

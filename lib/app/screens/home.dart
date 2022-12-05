@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
                     // width is 80% of the screen
                     width: MediaQuery.of(context).size.width * 0.8,
                     child: Text(
-                      'L’application de partage entre famille pour la famille par la famille.',
+                      'L\'app de la famille version admin pcq why not Ethan',
                       style: GoogleFonts.montserrat(
                         fontSize: 20,
                         color: const Color.fromARGB(255, 248, 248, 248),
@@ -82,14 +82,19 @@ class HomeScreen extends StatelessWidget {
                 Align(
                     // this one will be 100px height and 100px width, 22px left and 350px down
                     alignment: const Alignment(1, 0.05),
-                    child: SizedBox(
-                      height: 200,
-                      width: 200,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
-                        child: Image.asset(
-                          'assets/img/2.jpg',
-                          fit: BoxFit.cover,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/admin');
+                      },
+                      child: SizedBox(
+                        height: 200,
+                        width: 200,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: Image.asset(
+                            'assets/img/2.jpg',
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     )),
@@ -122,7 +127,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       onPressed: () {
                         // go to add_content.dart
-                        Navigator.pushNamed(context, '/addContent');
+                        Navigator.pushNamed(context, '/admin');
                       },
                       child: // Iconify arrow
                           const Iconify(

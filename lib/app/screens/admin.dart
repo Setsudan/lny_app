@@ -79,6 +79,15 @@ class _AdminScreenState extends State<AdminScreen> {
     });
   }
 
+  _downloadImage(int index) async {
+    // images are stored in the firebase storage in the folder 'images'
+    final ref = FirebaseStorage.instance.ref().child('images');
+    // get the url of the image
+    final url = await ref.child('image$index').getDownloadURL();
+    // download the image
+    await ref.child('image$index').writeToFile(File(url));
+  }
+
   _addImage() async {
     // get the image from the gallery
     final image = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -170,6 +179,21 @@ class _AdminScreenState extends State<AdminScreen> {
                                 ),
                                 icon: const Iconify(
                                   MaterialSymbols.edit,
+                                  color: Color.fromARGB(255, 17, 17, 17),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  _downloadImage(index);
+                                },
+                                // change bg so the icon is visible
+                                style: ButtonStyle(
+                                  backgroundColor: MaterialStateProperty.all<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                                icon: const Iconify(
+                                  MaterialSymbols.download,
                                   color: Color.fromARGB(255, 17, 17, 17),
                                 ),
                               ),

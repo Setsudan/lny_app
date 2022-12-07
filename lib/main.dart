@@ -6,8 +6,8 @@ import "./app/screens/splash.dart";
 
 // Screens
 import "./app/screens/home.dart";
-import "./app/screens/add_content.dart";
 import "./app/screens/admin.dart";
+import "./app/screens/gallery.dart";
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       routes: {
         '/home': (context) => const HomeScreen(),
-        '/addContent': (context) => const AddContentScreen(),
+        '/gallery': (context) => const GalleryScreen(),
         '/admin': (context) => const AdminScreen(),
       },
     );

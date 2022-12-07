@@ -9,6 +9,9 @@ import 'package:iconify_flutter/icons/material_symbols.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  // password to access the admin page
+  final String password = 'ILoveEthan';
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -82,19 +85,14 @@ class HomeScreen extends StatelessWidget {
                 Align(
                     // this one will be 100px height and 100px width, 22px left and 350px down
                     alignment: const Alignment(1, 0.05),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/admin');
-                      },
-                      child: SizedBox(
-                        height: 200,
-                        width: 200,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
-                          child: Image.asset(
-                            'assets/img/2.jpg',
-                            fit: BoxFit.cover,
-                          ),
+                    child: SizedBox(
+                      height: 200,
+                      width: 200,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Image.asset(
+                          'assets/img/2.jpg',
+                          fit: BoxFit.cover,
                         ),
                       ),
                     )),
@@ -127,7 +125,36 @@ class HomeScreen extends StatelessWidget {
                       ),
                       onPressed: () {
                         // go to add_content.dart
-                        Navigator.pushNamed(context, '/admin');
+                        Navigator.pushNamed(context, '/gallery');
+                      },
+                      onLongPress: () {
+                        // prompt for password using a dialog
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Password'),
+                              content: const TextField(
+                                obscureText: true,
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  labelText: 'Password',
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    // if the password is correct, go to the admin page
+                                    if (password == 'ILoveEthan') {
+                                      Navigator.pushNamed(context, '/admin');
+                                    }
+                                  },
+                                  child: const Text('Submit'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       },
                       child: // Iconify arrow
                           const Iconify(

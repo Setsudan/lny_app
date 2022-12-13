@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 // Fonts
 import 'package:google_fonts/google_fonts.dart';
 // Icons
@@ -46,51 +47,28 @@ class _AdminScreenState extends State<AdminScreen> {
       setState(() {
         images.add(url);
       });
-      print(url);
     }
     setState(() {
       numberOfImages = list.items.length;
     });
   }
 
-  _deleteImage(int index) async {
-    // images are stored in the firebase storage in the folder 'images'
-    final ref = FirebaseStorage.instance.ref().child('images');
-    // delete the image
-    await ref.child('image$index').delete();
-    // refresh the page
-    setState(() {
-      images.removeAt(index);
-    });
-  }
-
-  _replaceImage(int index) async {
-    // get the image from the gallery
-    final image = await ImagePicker().pickImage(source: ImageSource.gallery);
-    // images are stored in the firebase storage in the folder 'images'
-    final ref = FirebaseStorage.instance.ref().child('images');
-    // delete the image
-    await ref.child('image$index').delete();
-    // upload the new image
-    await ref.child('image$index').putFile(File(image!.path));
-    // refresh the page
-    setState(() {
-      images.removeAt(index);
-    });
-  }
-
-  _downloadImage(int index) async {
-    // images are stored in the firebase storage in the folder 'images'
-    final ref = FirebaseStorage.instance.ref().child('images');
-    // get the url of the image
-    final url = await ref.child('image$index').getDownloadURL();
-    // download the image
-    await ref.child('image$index').writeToFile(File(url));
-  }
-
   _addImage() async {
     // get the image from the gallery
     final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    // images are stored in the firebase storage in the folder 'images'
+    final ref = FirebaseStorage.instance.ref().child('images');
+    // upload the new image with timestamp as name
+    await ref.child(DateTime.now().millisecondsSinceEpoch.toString()).putFile(File(image!.path));
+    // refresh the page
+    setState(() {
+      images.add(image.path);
+    });
+  }
+
+  _handleCamera() async {
+    // get the image from the camera
+    final image = await ImagePicker().pickImage(source: ImageSource.camera);
     // images are stored in the firebase storage in the folder 'images'
     final ref = FirebaseStorage.instance.ref().child('images');
     // upload the new image
@@ -113,15 +91,65 @@ class _AdminScreenState extends State<AdminScreen> {
       child: Scaffold(
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            _addImage();
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text(
+                    'Choose an option',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Open the gallery
+                      TextButton(
+                        onPressed: () {
+                          _addImage();
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          'Gallery',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                      // Open the camera
+                      TextButton(
+                        onPressed: () {
+                          _handleCamera();
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          'Camera',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
           },
-          backgroundColor: const Color.fromARGB(255, 238, 238, 155),
-          child: const Iconify(
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          child: Iconify(
             MaterialSymbols.add,
-            color: Color.fromARGB(255, 17, 17, 17),
+            color: Theme.of(context).colorScheme.onPrimary,
           ),
         ),
-        backgroundColor: const Color.fromARGB(255, 17, 17, 17),
+        backgroundColor: const Color(0xff111111),
         body: Column(
           children: [
             Container(
@@ -136,71 +164,147 @@ class _AdminScreenState extends State<AdminScreen> {
               child: ListView.builder(
                 itemCount: images.length,
                 itemBuilder: (context, index) {
-                  return Container(
-                    margin: const EdgeInsets.all(10),
-                    child: Stack(
-                      children: [
-                        // round corner image
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Image.network(
-                            images[index],
-                            fit: BoxFit.cover,
+                  return GestureDetector(
+                    onLongPress: () {
+                      // open the image in a full screen // Open image on full screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Scaffold(
+                            floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
+                            floatingActionButton: FloatingActionButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              tooltip: 'Close',
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              child: Iconify(
+                                MaterialSymbols.close,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                            backgroundColor: Theme.of(context).colorScheme.onPrimary,
+                            body: Center(
+                              child: Image.network(images[index]),
+                            ),
                           ),
                         ),
-                        Positioned(
-                          bottom: 10,
-                          right: 10,
-                          child: Row(
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  _deleteImage(index);
-                                },
-                                style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                                icon: const Iconify(
-                                  MaterialSymbols.delete_outline,
-                                  color: Color.fromARGB(255, 17, 17, 17),
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  _replaceImage(index);
-                                },
-                                // change bg so the icon is visible
-                                style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                                icon: const Iconify(
-                                  MaterialSymbols.edit,
-                                  color: Color.fromARGB(255, 17, 17, 17),
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  _downloadImage(index);
-                                },
-                                // change bg so the icon is visible
-                                style: ButtonStyle(
-                                  backgroundColor: MaterialStateProperty.all<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                                icon: const Iconify(
-                                  MaterialSymbols.download,
-                                  color: Color.fromARGB(255, 17, 17, 17),
-                                ),
-                              ),
-                            ],
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.all(10),
+                      child: Stack(
+                        children: [
+                          // round corner image
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.network(
+                              images[index],
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                        ),
-                      ],
+                          Positioned(
+                            bottom: 10,
+                            right: 10,
+                            child: Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    // ask for confirmation
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return AlertDialog(
+                                          title: Text(
+                                            'Are you sure you want to delete this image?',
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w800,
+                                              color: Theme.of(context).colorScheme.onPrimary,
+                                            ),
+                                          ),
+                                          backgroundColor: Theme.of(context).colorScheme.primary,
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              // Open the gallery
+                                              TextButton(
+                                                onPressed: () {
+                                                  // delete the image from the firebase storage
+                                                  storage.refFromURL(images[index]).delete();
+                                                  // refresh the page
+                                                  setState(() {
+                                                    images.removeAt(index);
+                                                  });
+                                                  Navigator.pop(context);
+                                                },
+                                                child: Text(
+                                                  'Yes',
+                                                  style: GoogleFonts.montserrat(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: Theme.of(context).colorScheme.onPrimary,
+                                                  ),
+                                                ),
+                                              ),
+                                              // Open the camera
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                },
+                                                child: Text(
+                                                  'No',
+                                                  style: GoogleFonts.montserrat(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: Theme.of(context).colorScheme.onPrimary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty.all<Color>(
+                                      Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                  icon: Iconify(
+                                    MaterialSymbols.delete_outline,
+                                    color: Theme.of(context).colorScheme.onPrimary,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    storage.refFromURL(images[index]).getDownloadURL().then((value) {
+                                      // put the url in the clipboard
+                                      Clipboard.setData(ClipboardData(text: value));
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Copied to clipboard'),
+                                        ),
+                                      );
+                                    });
+                                  },
+                                  // change bg so the icon is visible
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty.all<Color>(
+                                      Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                  icon: Iconify(
+                                    MaterialSymbols.download,
+                                    color: Theme.of(context).colorScheme.onPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },

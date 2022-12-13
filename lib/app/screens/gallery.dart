@@ -46,7 +46,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
       setState(() {
         images.add(url);
       });
-      print(url);
     }
     setState(() {
       numberOfImages = list.items.length;
@@ -56,6 +55,19 @@ class _GalleryScreenState extends State<GalleryScreen> {
   _addImage() async {
     // get the image from the gallery
     final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    // images are stored in the firebase storage in the folder 'images'
+    final ref = FirebaseStorage.instance.ref().child('images');
+    // upload the new image
+    await ref.child('image$numberOfImages').putFile(File(image!.path));
+    // refresh the page
+    setState(() {
+      images.add(image.path);
+    });
+  }
+
+  _handleCamera() async {
+    // get the image from the camera
+    final image = await ImagePicker().pickImage(source: ImageSource.camera);
     // images are stored in the firebase storage in the folder 'images'
     final ref = FirebaseStorage.instance.ref().child('images');
     // upload the new image
@@ -78,13 +90,64 @@ class _GalleryScreenState extends State<GalleryScreen> {
       child: Scaffold(
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            _addImage();
+            // open a dialog to choose between opening the gallery or the camera
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text(
+                    'Choose an option',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Open the gallery
+                      TextButton(
+                        onPressed: () {
+                          _addImage();
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          'Gallery',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                      // Open the camera
+                      TextButton(
+                        onPressed: () {
+                          _handleCamera();
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          'Camera',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
           },
           tooltip: 'Add Image',
-          backgroundColor: const Color.fromARGB(255, 238, 238, 155),
-          child: const Iconify(
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          child: Iconify(
             MaterialSymbols.add,
-            color: Color.fromARGB(255, 17, 17, 17),
+            color: Theme.of(context).colorScheme.onPrimary,
           ),
         ),
         backgroundColor: const Color.fromARGB(255, 17, 17, 17),
@@ -95,26 +158,54 @@ class _GalleryScreenState extends State<GalleryScreen> {
               child: Text(
                 'Number of images: $numberOfImages',
                 style: GoogleFonts.montserrat(
-                    fontSize: 20, fontWeight: FontWeight.w800, color: const Color.fromARGB(255, 255, 239, 239)),
+                    fontSize: 20, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onPrimary),
               ),
             ),
             Expanded(
               child: ListView.builder(
                 itemCount: images.length,
                 itemBuilder: (context, index) {
-                  return Container(
-                    margin: const EdgeInsets.all(10),
-                    child: Stack(
-                      children: [
-                        // round corner image
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Image.network(
-                            images[index],
-                            fit: BoxFit.cover,
+                  return GestureDetector(
+                    onLongPress: () {
+                      // Open image on full screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Scaffold(
+                            floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
+                            floatingActionButton: FloatingActionButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              tooltip: 'Close',
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              child: Iconify(
+                                MaterialSymbols.close,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                            backgroundColor: Theme.of(context).colorScheme.onPrimary,
+                            body: Center(
+                              child: Image.network(images[index]),
+                            ),
                           ),
                         ),
-                      ],
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.all(10),
+                      child: Stack(
+                        children: [
+                          // round corner image
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.network(
+                              images[index],
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },

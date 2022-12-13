@@ -4,11 +4,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/material_symbols.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  // password to access the admin page
-  final String password = '';
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // password input field
+  String password = '';
 
   @override
   Widget build(BuildContext context) {
@@ -246,9 +251,12 @@ class HomeScreen extends StatelessWidget {
                           builder: (BuildContext context) {
                             return AlertDialog(
                               title: const Text('Password'),
-                              content: const TextField(
+                              content: TextField(
                                 obscureText: true,
-                                decoration: InputDecoration(
+                                onChanged: (String value) {
+                                  password = value;
+                                },
+                                decoration: const InputDecoration(
                                   border: OutlineInputBorder(),
                                   labelText: 'Password',
                                 ),

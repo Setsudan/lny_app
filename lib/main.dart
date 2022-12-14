@@ -40,48 +40,8 @@ class MyApp extends StatelessWidget {
           '/home': (context) => const HomeScreen(),
           '/gallery': (context) => const GalleryScreen(),
           '/admin': (context) => const AdminScreen(),
-          '/palette': (context) => const PaletteScreen(),
         },
       );
     });
-  }
-}
-
-// The palette screen shows the primary and secondary colors of the current color scheme.
-
-class PaletteScreen extends StatelessWidget {
-  const PaletteScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Palette')),
-      body: DynamicColorBuilder(builder: (lightColorScheme, darkColorScheme) {
-        return Column(
-          children: [
-            Container(
-              height: 100,
-              color: lightColorScheme?.primary,
-              child: Center(child: Text('Primary: ${lightColorScheme?.primary}')),
-            ),
-            Container(
-              height: 100,
-              color: lightColorScheme?.secondary,
-              child: Center(child: Text('Secondary: ${lightColorScheme?.secondary}')),
-            ),
-            Container(
-              height: 100,
-              color: darkColorScheme?.primary,
-              child: Center(child: Text('Primary: ${darkColorScheme?.primary}')),
-            ),
-            Container(
-              height: 100,
-              color: darkColorScheme?.secondary,
-              child: Center(child: Text('Secondary: ${darkColorScheme?.secondary}')),
-            ),
-          ],
-        );
-      }),
-    );
   }
 }

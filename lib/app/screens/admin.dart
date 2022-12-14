@@ -10,10 +10,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 // Image Picker
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-
-// This page is similar to the add_content.dart page
-// however, it is used to edit the images in the firebase storage
-// we can add, delete, edit and download the images
+// connectivity_plus
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({Key? key}) : super(key: key);
@@ -32,10 +30,31 @@ class _AdminScreenState extends State<AdminScreen> {
     _getImages();
   }
 
+  // check if the device is connected to the internet
+  Future<bool> checkInternet() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
   bool loading = false;
   bool isSent = false;
   final storage = FirebaseStorage.instance;
   final storageRef = FirebaseStorage.instance.ref();
+  _uploadImage(String path) async {
+    // images are stored in the firebase storage in the folder 'images'
+    final ref = FirebaseStorage.instance.ref().child('images');
+    // upload the new image
+    await ref.child('image$numberOfImages').putFile(File(path));
+    // refresh the page
+    setState(() {
+      images.add(path);
+    });
+  }
+
   _getImages() async {
     // all images are in the images folder
     final folder = storageRef.child('images');
@@ -56,34 +75,75 @@ class _AdminScreenState extends State<AdminScreen> {
   _addImage() async {
     // get the image from the gallery
     final image = await ImagePicker().pickImage(source: ImageSource.gallery);
-    // images are stored in the firebase storage in the folder 'images'
-    final ref = FirebaseStorage.instance.ref().child('images');
-    // upload the new image with timestamp as name
-    await ref.child(DateTime.now().millisecondsSinceEpoch.toString()).putFile(File(image!.path));
-    // refresh the page
-    setState(() {
-      images.add(image.path);
+    // check if the user is connected to wifi
+    checkInternet().then((value) {
+      if (value) {
+        // if the user is connected to wifi, upload the image
+        _uploadImage(image!.path);
+      } else {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text(
+                'No internet connection',
+                style: GoogleFonts.montserrat(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              content: Text(
+                'Please connect to wifi to upload the image',
+                style: GoogleFonts.montserrat(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+            );
+          },
+        );
+      }
     });
   }
 
   _handleCamera() async {
     // get the image from the camera
     final image = await ImagePicker().pickImage(source: ImageSource.camera);
-    // images are stored in the firebase storage in the folder 'images'
-    final ref = FirebaseStorage.instance.ref().child('images');
-    // upload the new image
-    await ref.child('image$numberOfImages').putFile(File(image!.path));
-    // refresh the page
-    setState(() {
-      images.add(image.path);
-    });
+    // check if the user is connected to wifi
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.wifi) {
+      // if the user is connected to wifi, upload the image
+      _uploadImage(image!.path);
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(
+              'No internet connection',
+              style: GoogleFonts.montserrat(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            content: Text(
+              'Please connect to wifi to upload the image',
+              style: GoogleFonts.montserrat(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
+          );
+        },
+      );
+    }
   }
-
-  // We will display the number of images on top of the screen
-  // then display each image in a list
-  // we will change the size to fit a square
-  // a button on bottom right corner of the image to choose to delete or replace the image
-  // and a button on bottom right of the screen to add a new image
 
   @override
   Widget build(BuildContext context) {

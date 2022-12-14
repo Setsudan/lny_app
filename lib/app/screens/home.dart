@@ -3,6 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 // icons
 import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:iconify_flutter/icons/material_symbols.dart';
+// url launcher
+import 'package:url_launcher/url_launcher.dart';
+// connectivity_plus
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,11 +18,21 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   // password input field
   String password = '';
+  // website url
+  final Uri _url = Uri.parse('https://lny-gallery.web.app/');
+
+  Future<void> _launchUrl() async {
+    if (!await launchUrl(_url)) {
+      throw 'Could not launch $_url';
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: const Color(0x00111111),
         body: // this will be seperated into two sections, the top one text, the secon one a group of images
             SafeArea(
@@ -26,6 +40,28 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Stack(
               children: [
+                Align(
+                  alignment: const Alignment(-1, -1),
+                  child: SizedBox(
+                    height: 50,
+                    width: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // open website
+                        _launchUrl();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        shape: const CircleBorder(),
+                      ),
+                      child: Iconify(
+                        // website icon
+                        MaterialSymbols.web,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                ),
                 Align(
                   alignment: const Alignment(0, -0.9),
                   child: Text(
@@ -47,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     // width is 80% of the screen
                     width: MediaQuery.of(context).size.width * 0.8,
                     child: Text(
-                      'L\'app de la famille version admin pcq why not Ethan',
+                      'L\'app de la famille pour la famille !',
                       style: GoogleFonts.montserrat(
                         fontSize: 20,
                         color: const Color.fromARGB(255, 248, 248, 248),
@@ -264,11 +300,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               actions: [
                                 TextButton(
                                   onPressed: () {
-                                    // if the password is correct, go to the admin page
-                                    if (password == 'ILoveEthan') {
-                                      // close the dialog
-                                      Navigator.pop(context);
+                                    // check if password is correct
+                                    if (password == 'paradise') {
+                                      // go to add_content.dart
                                       Navigator.pushNamed(context, '/admin');
+                                    } else {
+                                      // show error message
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Wrong password'),
+                                        ),
+                                      );
                                     }
                                   },
                                   child: const Text('Submit'),
